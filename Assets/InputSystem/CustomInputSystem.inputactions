@@ -1,0 +1,45 @@
+{
+    "name": "CustomInputSystem",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "06b6d93b-45a2-40fb-b1a3-fb8a27b56f67",
+            "actions": [
+                {
+                    "name": "Jump",
+                    "type": "Button",
+                    "id": "98e38f1b-a12a-4540-8c42-947d9fede2f1",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "77a91ec5-18ad-4ba4-b0e7-f0e869af52d0",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bf1f987d-8529-4d5f-9941-df2980634ff0",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
