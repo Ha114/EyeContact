@@ -9,14 +9,15 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] public Camera mainCamera;
     [SerializeField] public float interactionDistance = 3f;
     [SerializeField] public GameObject interactionUI;
-    [SerializeField] public TextMeshProUGUI interactionText;
-
-    private bool hitSomething;
-
-    [SerializeField] private InputActionReference primaryInput;
-    [SerializeField] private InputActionReference secondaryInput;
-
+    [SerializeField] public InputActionReference primaryInput;
+    [SerializeField] public InputActionReference secondaryInput;
+    [SerializeField] public InputActionReference tertiaryInput;
+    [SerializeField] private PlayerInput playerInput;
+    
     public IInteractable CurrentTarget { get; private set; }
+
+    public delegate void OnInteractionExecute(InteractionSlot value);
+    public static event OnInteractionExecute onInteractionExecute;
 
     private void OnEnable()
     {
@@ -24,6 +25,8 @@ public class PlayerInteractor : MonoBehaviour
         primaryInput.action.canceled += OnPrimary;
         secondaryInput.action.performed += OnSecondary;
         secondaryInput.action.canceled += OnSecondary;
+        tertiaryInput.action.performed += OnTertiary;
+        tertiaryInput.action.canceled += OnTertiary;
     }
 
     private void OnDisable()
@@ -32,18 +35,42 @@ public class PlayerInteractor : MonoBehaviour
         primaryInput.action.canceled -= OnPrimary;
         secondaryInput.action.performed -= OnSecondary;
         secondaryInput.action.canceled -= OnSecondary;
+        tertiaryInput.action.performed -= OnTertiary;
+        tertiaryInput.action.canceled -= OnTertiary;
+    }
+    private void OnPrimary(InputAction.CallbackContext ctx)
+    {
+        ExecuteInteraction(InteractionSlot.Primary);
     }
 
-    private void OnPrimary(InputAction.CallbackContext context)
+    private void OnSecondary(InputAction.CallbackContext ctx)
     {
-        Debug.Log("Interact Primary");
-        CurrentTarget?.Interact(InteractionType.Primary);
+        ExecuteInteraction(InteractionSlot.Secondary);
     }
 
-    private void OnSecondary(InputAction.CallbackContext context)
+    private void OnTertiary(InputAction.CallbackContext ctx)
     {
-        Debug.Log("Interact Secondary");
-        CurrentTarget?.Interact(InteractionType.Secondary);
+        ExecuteInteraction(InteractionSlot.Tertiary);
+    }
+
+    private void ExecuteInteraction(InteractionSlot slot)
+    {
+        var target = CurrentTarget;
+
+        if (target == null)
+            return;
+
+        var interactions = target.GetInteractions();
+
+        foreach (var interaction in interactions)
+        {
+            if (interaction.Slot == slot)
+            {
+                interaction.Execute();
+                onInteractionExecute?.Invoke(slot);
+                return;
+            }
+        }
     }
 
     void Update()
@@ -56,31 +83,40 @@ public class PlayerInteractor : MonoBehaviour
         CurrentTarget = null;
 
         Ray ray = mainCamera.ViewportPointToRay(Vector3.one/2f);
-        RaycastHit hit;
 
-        // hitSomething = false;
-
-        if (Physics.Raycast(ray, out hit, interactionDistance))
+        if (Physics.SphereCast(ray, 0.25f, out RaycastHit hit, interactionDistance))
         {
             CurrentTarget = hit.collider.GetComponent<IInteractable>();
-            if (CurrentTarget != null)
-            {
-                // hitSomething = true;
-                
-                IInteractable interactable = CurrentTarget;
-
-                if (interactable != null)
-                {
-                    IReadOnlyList<Interaction> interactions =
-                        interactable.GetInteractions();
-
-                    foreach (Interaction interaction in interactions)
-                    {
-                        Debug.Log(interaction.Description);
-                    }
-                }
-            }
         }
+
         interactionUI.SetActive(CurrentTarget != null);    
+    }
+
+    public string GetInteractionKey(InteractionSlot slot)
+    {
+        InputAction action = slot switch
+        {
+            InteractionSlot.Primary => primaryInput.action,
+            InteractionSlot.Secondary => secondaryInput.action,
+            InteractionSlot.Tertiary => tertiaryInput.action,
+            _ => null
+        };
+
+        if (action == null)
+            return "";
+
+        string controlScheme = playerInput.currentControlScheme;
+
+        int bindingIndex = action.GetBindingIndex(
+            InputBinding.MaskByGroup(controlScheme)
+        );
+
+        if (bindingIndex < 0)
+            return "";
+
+        return action.GetBindingDisplayString(
+            bindingIndex,
+            InputBinding.DisplayStringOptions.DontIncludeInteractions
+        );
     }
 }

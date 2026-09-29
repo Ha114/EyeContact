@@ -2,19 +2,18 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum InteractionType
+public enum InteractionSlot
 {
     Primary,
     Secondary,
-    Inspect
+    Tertiary
 }
-
 public interface IInteractable
 {
     // void Interact();
     // string GetDescription();
     IReadOnlyList<Interaction> GetInteractions();
-    void Interact(InteractionType type);
+    //void Interact(InteractionSlot type);
 }
 
 public interface IInteraction
@@ -24,17 +23,23 @@ public interface IInteraction
     void Execute();
 }
 
-public class Interaction : IInteraction
+public class Interaction
 {
+    public InteractionSlot Slot { get; }
     public string Id { get; }
-    public string Description { get; }
+    public string Descriptiom { get; }
 
     private readonly Action execute;
 
-    public Interaction(string id, string description, Action execute)
+    public Interaction(
+        InteractionSlot slot,
+        string id,
+        string displayName,
+        Action execute)
     {
+        Slot = slot;
         Id = id;
-        Description = description;
+        Descriptiom = displayName;
         this.execute = execute;
     }
 

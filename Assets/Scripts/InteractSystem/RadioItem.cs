@@ -8,11 +8,21 @@ public class Radio : MonoBehaviour, IInteractable
     private void Awake()
     {
         interactions.Add(
-            new Interaction("talk", "Talk", Talk)
+            new Interaction(
+                InteractionSlot.Primary,
+                "Music",
+                "Music",
+                Music
+            )
         );
 
         interactions.Add(
-            new Interaction("inspect", "Inspect", Inspect)
+            new Interaction(
+                InteractionSlot.Secondary,
+                "Comunicate",
+                "Comunicate",
+                Comunicate
+            )
         );
     }
 
@@ -21,18 +31,13 @@ public class Radio : MonoBehaviour, IInteractable
         return interactions;
     }
 
-    private void Talk()
+    private void Music()
     {
-        Debug.Log("Talk");
+        Debug.Log("<color=red>TEST Music</color>");
     }
 
-    private void Inspect()
+    private void Comunicate()
     {
-        Debug.Log("Inspect");
-    }
-
-    public void Interact(InteractionType type)
-    {
-        throw new System.NotImplementedException();
+        Debug.Log("<color=yellow>TEST Comunicate</color>");
     }
 }

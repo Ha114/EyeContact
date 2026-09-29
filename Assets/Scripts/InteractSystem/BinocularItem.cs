@@ -13,10 +13,10 @@ public class BinocularItem : MonoBehaviour, IInteractable
         return "Interact with Binocular";
     }
 
-    public void Interact(InteractionType type)
-    {
-        throw new System.NotImplementedException();
-    }
+    // public void Interact(InteractionType type)
+    // {
+    //     throw new System.NotImplementedException();
+    // }
 
     public IReadOnlyList<Interaction> GetInteractions()
     {

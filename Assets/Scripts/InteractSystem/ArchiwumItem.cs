@@ -20,10 +20,6 @@ public class ArchiwumItem : MonoBehaviour, IInteractable
         return "Open Archiwum";
     }
 
-    public void Interact(InteractionType type)
-    {
-        throw new System.NotImplementedException();
-    }
 
     public IReadOnlyList<Interaction> GetInteractions()
     {

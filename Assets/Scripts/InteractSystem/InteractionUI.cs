@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class InteractionUI : MonoBehaviour
 {
@@ -8,29 +11,78 @@ public class InteractionUI : MonoBehaviour
     [SerializeField] Transform InteractOptionsContextHolder;
 
     public IInteractable CurrentTarget { get; private set; }
-    void OnEnable()
+    private PlayerInput playerInput;
+
+    private void OnEnable()
     {
-        CurrentTarget = null;
-        CurrentTarget = Player.gameObject.GetComponent<PlayerInteractor>().CurrentTarget;
+        playerInput = Player.GetComponent<PlayerInput>();
 
-        var x = CurrentTarget.GetInteractions();
-        Debug.Log("InteractionUI count = " + x.Count);
+        playerInput.onControlsChanged += OnControlsChanged;
+        PlayerInteractor.onInteractionExecute += ChangeUI;
 
-        foreach( var x2 in x)
+        BuildUI();
+    }
+
+    private void OnDisable()
+    {
+        if (playerInput != null)
+            playerInput.onControlsChanged -= OnControlsChanged;
+        
+        PlayerInteractor.onInteractionExecute -= ChangeUI;
+
+        ClearUI();
+    
+    }
+    private void OnControlsChanged(PlayerInput input)
+    {
+        BuildUI();
+    }
+    private void BuildUI()
+    {
+        ClearUI();
+
+        var playerInteractor = Player.GetComponent<PlayerInteractor>();
+        CurrentTarget = playerInteractor.CurrentTarget;
+
+        if (CurrentTarget == null)
+            return;
+
+        foreach (var interaction in CurrentTarget.GetInteractions())
         {
-            Debug.Log("InteractionUI foreach = " + x2.Description);
-            GameObject option = Instantiate(InteractOptionPrefab);
-            option.transform.SetParent(InteractOptionsContextHolder);
-            option.GetComponent<InteractionOption>().SetInteractionDescriptionText(x2.Description);
+            GameObject option = Instantiate(
+                InteractOptionPrefab,
+                InteractOptionsContextHolder
+            );
+
+            var interactionOption = option.GetComponent<InteractionOption>();
+
+            interactionOption.SetInteractionDescriptionText(
+                interaction.Descriptiom
+            );
+
+            string key = playerInteractor.GetInteractionKey(
+                interaction.Slot
+            );
+
+            interactionOption.SetInteractionKeyText(key);
         }
     }
 
-    void OnDisable()
+    private void ChangeUI(InteractionSlot value)
     {
-        CurrentTarget = null;
+        // Debug.Log("Ui Interact Button pressed, value = " + value + ", string = " + value.ToString() + ", int = " + (int)value);
+        var x = InteractOptionsContextHolder.GetChild((int)value).gameObject.GetComponent<InteractionOption>();
 
-        foreach (Transform child in InteractOptionsContextHolder) {
-            GameObject.Destroy(child.gameObject);
+        if (x != null)
+            x.Pressed();
+    }
+
+    
+    private void ClearUI()
+    {
+        foreach (Transform child in InteractOptionsContextHolder)
+        {
+            Destroy(child.gameObject);
         }
     }
 }

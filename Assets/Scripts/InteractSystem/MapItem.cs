@@ -18,8 +18,8 @@ public class MapItem : MonoBehaviour, IInteractable
         throw new System.NotImplementedException();
     }
 
-    public void Interact(InteractionType primary)
-    {
-        throw new System.NotImplementedException();
-    }
+    // public void Interact(InteractionType primary)
+    // {
+    //     throw new System.NotImplementedException();
+    // }
 }
