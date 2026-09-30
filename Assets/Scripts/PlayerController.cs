@@ -7,18 +7,13 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Speed")]
     [SerializeField] float walkSpeed = 20f;
-    //[SerializeField] float runSpeed = 8f;
-    //[SerializeField] float crouchSpeed = 2f;
 
-    [Header("Jump and Fall")]
-    //[SerializeField] private float jumpForce = 7f;
     [SerializeField] private float gravity = -12f;
     [SerializeField] private float initialFallVelocity = -2f;
 
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private InputActionReference moveAction;
-    [SerializeField] private InputActionReference jumpAction;
 
     private CharacterController _characterController;
     private Vector2 _moveInput;
@@ -37,18 +32,12 @@ public class PlayerController : MonoBehaviour
     {
         moveAction.action.performed += StoreMovementInput;
         moveAction.action.canceled += StoreMovementInput;
-
-        //jumpAction.action.performed += Jump;
-        //jumpAction.action.canceled += Jump;
     }
 
     private void OnDisable()
     {
         moveAction.action.performed -= StoreMovementInput;
         moveAction.action.canceled -= StoreMovementInput;
-
-        //jumpAction.action.performed -= Jump;
-        //jumpAction.action.canceled -= Jump;
     }
     void Update()
     {
@@ -61,14 +50,6 @@ public class PlayerController : MonoBehaviour
     {
         _moveInput = context.ReadValue<Vector2>();
     }
-    
-    //void Jump(InputAction.CallbackContext context)
-    //{
-    //    if (_isGrounded)
-    //    {
-    //        _verticalVelocity = jumpForce;
-    //    }
-    //}
     
     void HandleGravity()
     {

@@ -84,7 +84,7 @@ public class PlayerInteractor : MonoBehaviour
 
         Ray ray = mainCamera.ViewportPointToRay(Vector3.one/2f);
 
-        if (Physics.SphereCast(ray, 0.25f, out RaycastHit hit, interactionDistance))
+        if (Physics.SphereCast(ray, 0.5f, out RaycastHit hit, interactionDistance))
         {
             CurrentTarget = hit.collider.GetComponent<IInteractable>();
         }

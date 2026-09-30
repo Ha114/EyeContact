@@ -4,8 +4,35 @@ using UnityEngine;
 public class ArchiwumItem : MonoBehaviour, IInteractable
 {
     [SerializeField] GameObject Archive;
+    private readonly List<Interaction> interactions = new();
 
-    public void Interact()
+    private void Awake()
+    {
+        interactions.Add(
+            new Interaction(
+                InteractionSlot.Primary,
+                "Archives",
+                "OpenArchives",
+                OpenArchives
+            )
+        );
+
+        interactions.Add(
+            new Interaction(
+                InteractionSlot.Secondary,
+                "Manual",
+                "Manual",
+                ShowManual
+            )
+        );
+    }
+
+    public IReadOnlyList<Interaction> GetInteractions()
+    {
+        return interactions;
+    }
+
+    private void OpenArchives()
     {
         Debug.Log(gameObject.name + " - Interact");
  
@@ -15,14 +42,8 @@ public class ArchiwumItem : MonoBehaviour, IInteractable
         Archive.SetActive(!Archive.activeInHierarchy);
     }
 
-    public string GetDescription()
+    private void ShowManual()
     {
-        return "Open Archiwum";
-    }
-
-
-    public IReadOnlyList<Interaction> GetInteractions()
-    {
-        throw new System.NotImplementedException();
+        Debug.Log("<color=yellow>TEST Comunicate</color>");
     }
 }

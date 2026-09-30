@@ -3,23 +3,43 @@ using UnityEngine;
 
 public class BinocularItem : MonoBehaviour, IInteractable
 {
-    public void Interact()
-    {
-        Debug.Log(gameObject.name + " - Interact");
-    }
+    [SerializeField] GameObject BinocularMenu;
+    private readonly List<Interaction> interactions = new();
 
-    public string GetDescription()
+    private void Awake()
     {
-        return "Interact with Binocular";
-    }
+        interactions.Add(
+            new Interaction(
+                InteractionSlot.Primary,
+                "Binocular",
+                "Show/Close Binocular",
+                BinocularInteract
+            )
+        );
 
-    // public void Interact(InteractionType type)
-    // {
-    //     throw new System.NotImplementedException();
-    // }
+        interactions.Add(
+            new Interaction(
+                InteractionSlot.Secondary,
+                "Manual",
+                "Manual",
+                ShowManual
+            )
+        );
+    }
 
     public IReadOnlyList<Interaction> GetInteractions()
     {
-        throw new System.NotImplementedException();
+        return interactions;
+    }
+
+    private void BinocularInteract()
+    {
+        BinocularMenu.SetActive(!BinocularMenu.activeInHierarchy);
+        Debug.Log("<color=red>TEST BinocularInteract</color>");
+    }
+
+    private void ShowManual()
+    {
+        Debug.Log("<color=yellow>TEST Comunicate</color>");
     }
 }
