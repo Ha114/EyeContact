@@ -1,23 +1,27 @@
-using System;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class InteractionUI : MonoBehaviour
 {
-    [SerializeField] GameObject Player;
-    [SerializeField] GameObject InteractOptionPrefab;
-    [SerializeField] Transform InteractOptionsContextHolder;
+    [SerializeField] private GameObject Player;
+    [SerializeField] private GameObject InteractOptionPrefab;
+    [SerializeField] private Transform InteractOptionsContextHolder;
 
     public IInteractable CurrentTarget { get; private set; }
+
     private PlayerInput playerInput;
+    private PlayerInteractor playerInteractor;
+
+    private BinocularItem currentBinocularItem;
 
     private void OnEnable()
     {
         playerInput = Player.GetComponent<PlayerInput>();
+        playerInteractor = Player.GetComponent<PlayerInteractor>();
 
-        playerInput.onControlsChanged += OnControlsChanged;
+        if (playerInput != null)
+            playerInput.onControlsChanged += OnControlsChanged;
+
         PlayerInteractor.onInteractionExecute += ChangeUI;
 
         BuildUI();
@@ -27,25 +31,45 @@ public class InteractionUI : MonoBehaviour
     {
         if (playerInput != null)
             playerInput.onControlsChanged -= OnControlsChanged;
-        
+
         PlayerInteractor.onInteractionExecute -= ChangeUI;
 
+        UnsubscribeFromTarget();
+
         ClearUI();
-    
     }
+
+    private void Update()
+    {
+        if (playerInteractor == null)
+            return;
+
+        if (CurrentTarget != playerInteractor.CurrentTarget)
+        {
+            BuildUI();
+        }
+    }
+
     private void OnControlsChanged(PlayerInput input)
     {
         BuildUI();
     }
+
     private void BuildUI()
     {
+        UnsubscribeFromTarget();
+
         ClearUI();
 
-        var playerInteractor = Player.GetComponent<PlayerInteractor>();
+        if (playerInteractor == null)
+            return;
+
         CurrentTarget = playerInteractor.CurrentTarget;
 
         if (CurrentTarget == null)
             return;
+
+        SubscribeToTarget();
 
         foreach (var interaction in CurrentTarget.GetInteractions())
         {
@@ -54,7 +78,11 @@ public class InteractionUI : MonoBehaviour
                 InteractOptionsContextHolder
             );
 
-            var interactionOption = option.GetComponent<InteractionOption>();
+            InteractionOption interactionOption =
+                option.GetComponent<InteractionOption>();
+
+            if (interactionOption == null)
+                continue;
 
             interactionOption.SetInteractionDescriptionText(
                 interaction.Descriptiom
@@ -68,21 +96,48 @@ public class InteractionUI : MonoBehaviour
         }
     }
 
-    private void ChangeUI(InteractionSlot value)
+    private void SubscribeToTarget()
     {
-        // Debug.Log("Ui Interact Button pressed, value = " + value + ", string = " + value.ToString() + ", int = " + (int)value);
-        var x = InteractOptionsContextHolder.GetChild((int)value).gameObject.GetComponent<InteractionOption>();
+        currentBinocularItem = CurrentTarget as BinocularItem;
 
-        if (x != null)
-            x.Pressed();
+        if (currentBinocularItem != null)
+        {
+            currentBinocularItem.OnInteractionsChanged += BuildUI;
+        }
     }
 
-    
+    private void UnsubscribeFromTarget()
+    {
+        if (currentBinocularItem != null)
+        {
+            currentBinocularItem.OnInteractionsChanged -= BuildUI;
+            currentBinocularItem = null;
+        }
+    }
+
+    private void ChangeUI(InteractionSlot value)
+    {
+        int index = (int)value;
+
+        if (index < 0 || index >= InteractOptionsContextHolder.childCount)
+            return;
+
+        InteractionOption option =
+            InteractOptionsContextHolder
+                .GetChild(index)
+                .GetComponent<InteractionOption>();
+
+        if (option != null)
+            option.Pressed();
+    }
+
     private void ClearUI()
     {
         foreach (Transform child in InteractOptionsContextHolder)
         {
             Destroy(child.gameObject);
         }
+
+        CurrentTarget = null;
     }
 }

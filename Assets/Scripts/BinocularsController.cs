@@ -1,70 +1,254 @@
+using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class BinocularsController : MonoBehaviour
+public class BinocularController : MonoBehaviour
 {
-    [SerializeField] 
-    private float zoomSpeed = 5f;
+    [Header("References")]
+    [SerializeField] private GameInput gameInput;
+    [SerializeField] private GameObject binocularMenu;
+    [SerializeField] private Camera mainCamera;
 
-    private Camera m_mainCamera;
-    private bool _binoculatMode = false;
+    [Header("FOV")]
+    [SerializeField] private float zoomSpeed = 5f;
+
+    [Tooltip("FOV for views 0 through 5.")]
+    [SerializeField]
+    private float[] viewFOVs = new float[6]
+    {
+        30f,
+        20f,
+        15f,
+        10f,
+        5f,
+        1f
+    };
+
+    private bool binocularMode;
+
+    public bool IsOpen => binocularMode;
+
+    public event Action OnBinocularModeChanged;
 
     private float targetFOV;
-    private float normalFOV = 60f;
+    private float normalFOV;
+
+    private int currentView = 0;
+
+    public int CurrentView => currentView;
 
     public delegate void OnViewFieldChoosed(int value);
     public static event OnViewFieldChoosed onViewFieldChoosed;
 
-    private void Start()
+    private void Awake()
     {
-        m_mainCamera = Camera.main;
-        targetFOV = m_mainCamera.fieldOfView;
-    }
+        if (mainCamera == null)
+            mainCamera = Camera.main;
 
-    void OnEnable()
-    {
-        _binoculatMode = !_binoculatMode;
-        targetFOV = _binoculatMode ? 30f : normalFOV;
-    }
-
-    void OnDisable()
-    {
-        _binoculatMode = !_binoculatMode;
-        targetFOV = _binoculatMode ? 30f : normalFOV;
-    }
-
-    void Update()
-    {
-        if (_binoculatMode)
+        if (mainCamera != null)
         {
-            // if (Input.GetKeyDown(KeyCode.Alpha1))
-            // {
-            //     onViewFieldChoosed?.Invoke(0);
-            //     targetFOV = 1f; 
-            // }
-            // if (Input.GetKeyDown(KeyCode.Alpha2))
-            // {
-            //     onViewFieldChoosed?.Invoke(1);
-            //     targetFOV = 3f;
-            // }
-            // if (Input.GetKeyDown(KeyCode.Alpha3))
-            // {
-            //     onViewFieldChoosed?.Invoke(2);
-            //     targetFOV = 5f;
-            // }
-            // if (Input.GetKeyDown(KeyCode.Alpha4))
-            // {
-            //     onViewFieldChoosed?.Invoke(3);
-            //     targetFOV = 10f;
-            // }
-            // if (Input.GetKeyDown(KeyCode.Alpha5))
-            // {
-            //     onViewFieldChoosed?.Invoke(4);
-            //     targetFOV = 30f;
-            // }
+            normalFOV = mainCamera.fieldOfView;
+            targetFOV = normalFOV;
         }
 
-        m_mainCamera.fieldOfView = Mathf.Lerp(
-            m_mainCamera.fieldOfView,
+        if (gameInput == null)
+        {
+            Debug.LogError(
+                "BinocularController: GameInput is not assigned."
+            );
+        }
+
+        if (binocularMenu == null)
+        {
+            Debug.LogError(
+                "BinocularController: BinocularMenu is not assigned."
+            );
+        }
+    }
+
+    private void OnEnable()
+    {
+        SubscribeToInput();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromInput();
+    }
+
+    private void SubscribeToInput()
+    {
+        if (gameInput == null)
+            return;
+
+        gameInput.NextView.action.performed += OnNextView;
+        gameInput.PreviousView.action.performed += OnPreviousView;
+
+        gameInput.View0.action.performed += OnView0;
+        gameInput.View1.action.performed += OnView1;
+        gameInput.View2.action.performed += OnView2;
+        gameInput.View3.action.performed += OnView3;
+        gameInput.View4.action.performed += OnView4;
+        gameInput.View5.action.performed += OnView5;
+
+        gameInput.Cancel.action.performed += OnCancel;
+    }
+
+    private void UnsubscribeFromInput()
+    {
+        if (gameInput == null)
+            return;
+
+        gameInput.NextView.action.performed -= OnNextView;
+        gameInput.PreviousView.action.performed -= OnPreviousView;
+
+        gameInput.View0.action.performed -= OnView0;
+        gameInput.View1.action.performed -= OnView1;
+        gameInput.View2.action.performed -= OnView2;
+        gameInput.View3.action.performed -= OnView3;
+        gameInput.View4.action.performed -= OnView4;
+        gameInput.View5.action.performed -= OnView5;
+
+        gameInput.Cancel.action.performed -= OnCancel;
+    }
+
+    public void Toggle()
+    {
+        if (binocularMode)
+            Close();
+        else
+            Open();
+    }
+
+    public void Open()
+    {
+        if (binocularMode)
+            return;
+
+        if (viewFOVs == null || viewFOVs.Length < 6)
+        {
+            Debug.LogError(
+                "BinocularController: viewFOVs must contain 6 values."
+            );
+
+            return;
+        }
+
+        binocularMode = true;
+
+        targetFOV = viewFOVs[currentView];
+
+        if (binocularMenu != null)
+            binocularMenu.SetActive(true);
+
+        if (gameInput != null)
+            gameInput.SwitchToBinoculars();
+
+        onViewFieldChoosed?.Invoke(currentView);
+
+        OnBinocularModeChanged?.Invoke();
+    }
+
+    public void Close()
+    {
+        if (!binocularMode)
+            return;
+
+        binocularMode = false;
+
+        targetFOV = normalFOV;
+
+        if (binocularMenu != null)
+            binocularMenu.SetActive(false);
+
+        if (gameInput != null)
+            gameInput.SwitchToGameplay();
+
+        OnBinocularModeChanged?.Invoke();
+    }
+
+    private void OnNextView(InputAction.CallbackContext ctx)
+    {
+        if (!binocularMode)
+            return;
+
+        SelectView(currentView + 1);
+    }
+
+    private void OnPreviousView(InputAction.CallbackContext ctx)
+    {
+        if (!binocularMode)
+            return;
+
+        SelectView(currentView - 1);
+    }
+
+    private void OnView0(InputAction.CallbackContext ctx)
+    {
+        if (binocularMode)
+            SelectView(0);
+    }
+
+    private void OnView1(InputAction.CallbackContext ctx)
+    {
+        if (binocularMode)
+            SelectView(1);
+    }
+
+    private void OnView2(InputAction.CallbackContext ctx)
+    {
+        if (binocularMode)
+            SelectView(2);
+    }
+
+    private void OnView3(InputAction.CallbackContext ctx)
+    {
+        if (binocularMode)
+            SelectView(3);
+    }
+
+    private void OnView4(InputAction.CallbackContext ctx)
+    {
+        if (binocularMode)
+            SelectView(4);
+    }
+
+    private void OnView5(InputAction.CallbackContext ctx)
+    {
+        if (binocularMode)
+            SelectView(5);
+    }
+
+    private void OnCancel(InputAction.CallbackContext ctx)
+    {
+        if (binocularMode)
+            Close();
+    }
+
+    private void SelectView(int view)
+    {
+        if (viewFOVs == null || viewFOVs.Length < 6)
+            return;
+
+        int newView = Mathf.Clamp(view, 0, 5);
+
+        if (newView == currentView)
+            return;
+
+        currentView = newView;
+
+        targetFOV = viewFOVs[currentView];
+
+        onViewFieldChoosed?.Invoke(currentView);
+    }
+
+    private void Update()
+    {
+        if (mainCamera == null)
+            return;
+
+        mainCamera.fieldOfView = Mathf.Lerp(
+            mainCamera.fieldOfView,
             targetFOV,
             Time.deltaTime * zoomSpeed
         );

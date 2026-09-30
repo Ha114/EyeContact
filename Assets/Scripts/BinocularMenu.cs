@@ -1,17 +1,15 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class BinocularMenu : MonoBehaviour
 {
-
-    [SerializeField] Transform Zooms;
-    [SerializeField] Sprite zoomSelected;
-    [SerializeField] Sprite zoomUnselecked;
+    [SerializeField] private Transform Zooms;
+    [SerializeField] private Sprite zoomSelected;
+    [SerializeField] private Sprite zoomUnselecked;
 
     private void OnEnable()
     {
-        BinocularsController.onViewFieldChoosed += SelectViewObject;
+        BinocularController.onViewFieldChoosed += SelectViewObject;
     }
 
     private void SelectViewObject(int value)
@@ -23,20 +21,15 @@ public class BinocularMenu : MonoBehaviour
 
             if (img != null)
             {
-                if (i == value)
-                {
-                    img.sprite = zoomSelected;
-                }
-                else
-                {
-                    img.sprite = zoomUnselecked;
-                }
+                img.sprite = i == value
+                    ? zoomSelected
+                    : zoomUnselecked;
             }
         }
     }
 
     private void OnDisable()
     {
-        BinocularsController.onViewFieldChoosed -= SelectViewObject;
+        BinocularController.onViewFieldChoosed -= SelectViewObject;
     }
 }

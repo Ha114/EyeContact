@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Radio : MonoBehaviour, IInteractable
+public class RadioItem : MonoBehaviour, IInteractable
 {
     private readonly List<Interaction> interactions = new();
+
+    [SerializeField] GameObject radio;
 
     private void Awake()
     {
@@ -38,6 +40,7 @@ public class Radio : MonoBehaviour, IInteractable
 
     private void Comunicate()
     {
+        radio.SetActive(!radio.activeInHierarchy);
         Debug.Log("<color=yellow>TEST Comunicate</color>");
     }
 }

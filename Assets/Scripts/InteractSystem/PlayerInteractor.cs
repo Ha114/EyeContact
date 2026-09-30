@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,11 +7,13 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] public Camera mainCamera;
     [SerializeField] public float interactionDistance = 3f;
     [SerializeField] public GameObject interactionUI;
+
     [SerializeField] public InputActionReference primaryInput;
     [SerializeField] public InputActionReference secondaryInput;
     [SerializeField] public InputActionReference tertiaryInput;
+
     [SerializeField] private PlayerInput playerInput;
-    
+
     public IInteractable CurrentTarget { get; private set; }
 
     public delegate void OnInteractionExecute(InteractionSlot value);
@@ -23,8 +23,10 @@ public class PlayerInteractor : MonoBehaviour
     {
         primaryInput.action.performed += OnPrimary;
         primaryInput.action.canceled += OnPrimary;
+
         secondaryInput.action.performed += OnSecondary;
         secondaryInput.action.canceled += OnSecondary;
+
         tertiaryInput.action.performed += OnTertiary;
         tertiaryInput.action.canceled += OnTertiary;
     }
@@ -33,11 +35,14 @@ public class PlayerInteractor : MonoBehaviour
     {
         primaryInput.action.performed -= OnPrimary;
         primaryInput.action.canceled -= OnPrimary;
+
         secondaryInput.action.performed -= OnSecondary;
         secondaryInput.action.canceled -= OnSecondary;
+
         tertiaryInput.action.performed -= OnTertiary;
         tertiaryInput.action.canceled -= OnTertiary;
     }
+
     private void OnPrimary(InputAction.CallbackContext ctx)
     {
         ExecuteInteraction(InteractionSlot.Primary);
@@ -73,23 +78,27 @@ public class PlayerInteractor : MonoBehaviour
         }
     }
 
-    void Update()
+    private void Update()
     {
-       HandleInteraction();
+        HandleInteraction();
     }
 
-    void HandleInteraction()
+    private void HandleInteraction()
     {
         CurrentTarget = null;
 
-        Ray ray = mainCamera.ViewportPointToRay(Vector3.one/2f);
+        Ray ray = mainCamera.ViewportPointToRay(Vector3.one / 2f);
 
-        if (Physics.SphereCast(ray, 0.5f, out RaycastHit hit, interactionDistance))
+        if (Physics.SphereCast(
+                ray,
+                0.5f,
+                out RaycastHit hit,
+                interactionDistance))
         {
             CurrentTarget = hit.collider.GetComponent<IInteractable>();
         }
 
-        interactionUI.SetActive(CurrentTarget != null);    
+        interactionUI.SetActive(CurrentTarget != null);
     }
 
     public string GetInteractionKey(InteractionSlot slot)

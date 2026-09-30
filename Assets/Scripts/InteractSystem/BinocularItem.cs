@@ -1,30 +1,38 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BinocularItem : MonoBehaviour, IInteractable
 {
-    [SerializeField] GameObject BinocularMenu;
+    [SerializeField] private BinocularController binocularController;
     private readonly List<Interaction> interactions = new();
+
+    public event Action OnInteractionsChanged;
 
     private void Awake()
     {
-        interactions.Add(
-            new Interaction(
-                InteractionSlot.Primary,
-                "Binocular",
-                "Show/Close Binocular",
-                BinocularInteract
-            )
-        );
+        if (binocularController == null)
+        {
+            binocularController = GetComponent<BinocularController>();
+        }
 
-        interactions.Add(
-            new Interaction(
-                InteractionSlot.Secondary,
-                "Manual",
-                "Manual",
-                ShowManual
-            )
-        );
+        UpdateInteraction();
+    }
+
+    private void OnEnable()
+    {
+        if (binocularController != null)
+        {
+            binocularController.OnBinocularModeChanged += UpdateInteraction;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (binocularController != null)
+        {
+            binocularController.OnBinocularModeChanged -= UpdateInteraction;
+        }
     }
 
     public IReadOnlyList<Interaction> GetInteractions()
@@ -32,14 +40,52 @@ public class BinocularItem : MonoBehaviour, IInteractable
         return interactions;
     }
 
+    private void UpdateInteraction()
+    {
+        interactions.Clear();
+
+        string description =
+            binocularController != null && binocularController.IsOpen
+                ? "Close Binoculars"
+                : "Use Binoculars";
+
+        interactions.Add(
+            new Interaction(
+                InteractionSlot.Primary,
+                "Binocular",
+                description,
+                BinocularInteract
+            )
+        );
+
+        // interactions.Add(
+        //     new Interaction(
+        //         InteractionSlot.Secondary,
+        //         "Manual",
+        //         "Manual",
+        //         ShowManual
+        //     )
+        // );
+
+        OnInteractionsChanged?.Invoke();
+    }
+
     private void BinocularInteract()
     {
-        BinocularMenu.SetActive(!BinocularMenu.activeInHierarchy);
-        Debug.Log("<color=red>TEST BinocularInteract</color>");
+        if (binocularController == null)
+        {
+            Debug.LogError(
+                "BinocularItem: BinocularController is not assigned."
+            );
+            return;
+        }
+
+        binocularController.Toggle();
     }
 
     private void ShowManual()
     {
-        Debug.Log("<color=yellow>TEST Comunicate</color>");
+        Debug.Log("BinocularItem: ShowManual");
+        Debug.Log("<color=yellow>TEST Manual</color>");
     }
 }
